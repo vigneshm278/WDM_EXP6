@@ -1,6 +1,6 @@
 ### EX6 Information Retrieval Using Vector Space Model in Python
 ### NAME: VIGNESH M
-### DATE: 04.09.2025
+### DATE: 25.09.2025
 ### AIM: To implement Information Retrieval Using Vector Space Model in Python.
 ### Description: 
 <div align = "justify">
