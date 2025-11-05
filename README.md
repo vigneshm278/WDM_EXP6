@@ -1,104 +1,94 @@
-### EX7 Implementation of Link Analysis using HITS Algorithm
-### DATE: 05/11/2025
-### NAME: VIGNESH M
-### REGISTER NUMBER: 212223240176
-### AIM: To implement Link Analysis using HITS Algorithm in Python.
-### Description:
+### EX6 Information Retrieval Using Vector Space Model in Python
+### NAME: Vignesh M
+### DATE: 07.09.2025
+### AIM: To implement Information Retrieval Using Vector Space Model in Python.
+### Description: 
 <div align = "justify">
-The HITS (Hyperlink-Induced Topic Search) algorithm is a link analysis algorithm used to rank web pages. It identifies authority and hub pages 
-in a network of web pages based on the structure of the links between them.
+Implementing Information Retrieval using the Vector Space Model in Python involves several steps, including preprocessing text data, constructing a term-document matrix, 
+calculating TF-IDF scores, and performing similarity calculations between queries and documents. Below is a basic example using Python and libraries like nltk and 
+sklearn to demonstrate Information Retrieval using the Vector Space Model.
 
 ### Procedure:
-1. ***Initialization:***
-    <p>    a) Start with an initial set of authority and hub scores for each page.
-    <p>    b) Typically, initial scores are set to 1 or some random values.
-  
-2. ***Construction of the Adjacency Matrix:***
-    <p>    a) The web graph is represented as an adjacency matrix where each row and column correspond to a web page, and the matrix elements denote the presence or absence of links between pages.
-    <p>    b) If page A has a link to page B, the corresponding element in the adjacency matrix is set to 1; otherwise, it's set to 0.
-
-3. ***Iterative Updates:***
-    <p>    a) Update the authority scores based on the hub scores of pages pointing to them and update the hub scores based on the authority scores of pages they point to.
-    <p>    b) Calculate authority scores as the sum of hub scores of pages pointing to the given page.
-    <p>    c) Calculate hub scores as the sum of authority scores of pages that the given page points to.
-
-4. ***Normalization:***
-    <p>    a) Normalize authority and hub scores to prevent them from becoming too large or small.
-    <p>    b) Normalize by dividing by their Euclidean norms (L2-norm).
-
-5. ***Convergence Check:***
-    <p>    a) Check for convergence by measuring the change in authority and hub scores between iterations.
-    <p>    b) If the change falls below a predefined threshold or the maximum number of iterations is reached, the algorithm stops.
-
-6. ***Visualization:***
-    <p>    Visualize using bar chart to represent authority and hub scores.
+1. Define sample documents.
+2. Preprocess text data by tokenizing, removing stopwords, and punctuation.
+3. Construct a TF-IDF matrix using TfidfVectorizer from sklearn.
+4. Define a search function that calculates cosine similarity between a query and documents based on the TF-IDF matrix.
+5. Execute a sample query and display the search results along with similarity scores.
 
 ### Program:
-
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-
-def hits_algorithm(adjacency_matrix, max_iterations=100, tol=1.0e-6):
-    num_nodes = len(adjacency_matrix)
-    authority_scores = np.ones(num_nodes)
-    hub_scores = np.ones(num_nodes)
-    
-    for i in range(max_iterations):
-        # Authority update: a = A^T * h
-        new_authority_scores = adjacency_matrix.T @ hub_scores
-        # Hub update: h = A * a
-        new_hub_scores = adjacency_matrix @ new_authority_scores
-        
-        # Normalize scores
-        new_authority_scores /= np.linalg.norm(new_authority_scores, 2)
-        new_hub_scores /= np.linalg.norm(new_hub_scores, 2)
-        
-        # Check convergence
-        authority_diff = np.linalg.norm(new_authority_scores - authority_scores, 1)
-        hub_diff = np.linalg.norm(new_hub_scores - hub_scores, 1)
-        
-        if authority_diff < tol and hub_diff < tol:
-            break
-        
-        authority_scores = new_authority_scores
-        hub_scores = new_hub_scores
-    
-    return authority_scores, hub_scores
-
-# Example adjacency matrix
-adj_matrix = np.array([
-    [0, 1, 1],
-    [1, 0, 0],
-    [1, 0, 0]
-])
-
-# Run HITS algorithm
-authority, hub = hits_algorithm(adj_matrix)
-for i in range(len(authority)):
-    print(f"Node {i}: Authority Score = {authority[i]:.4f}, Hub Score = {hub[i]:.4f}")
-
-# Bar chart of authority vs hub scores
-nodes = np.arange(len(authority))
-bar_width = 0.35
-plt.figure(figsize=(8, 6))
-plt.bar(nodes - bar_width/2, authority, bar_width, label='Authority', color='blue')
-plt.bar(nodes + bar_width/2, hub, bar_width, label='Hub', color='green')
-plt.xlabel('Node')
-plt.ylabel('Scores')
-plt.title('Authority and Hub Scores for Each Node')
-plt.xticks(nodes, [f'Node {i}' for i in nodes])
-plt.legend()
-plt.tight_layout()
-plt.show()
-
-
 ```
+    import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 
+# Sample documents
+documents = {
+    "doc1": "This is the first document.",
+    "doc2": "This document is the second document.",
+    "doc3": "And this is the third one.",
+    "doc4": "Is this the first document?",
+}
+
+# --- Build TF-IDF ---
+vectorizer = TfidfVectorizer(stop_words="english")
+tfidf_matrix = vectorizer.fit_transform(documents.values()).toarray()
+terms = vectorizer.get_feature_names_out()
+idf_values = vectorizer.idf_
+
+# --- Term Frequency (TF) ---
+tf_matrix = np.zeros_like(tfidf_matrix, dtype=int)
+for i, doc in enumerate(documents.values()):
+    words = doc.lower().split()
+    for j, term in enumerate(terms):
+        tf_matrix[i, j] = words.count(term)
+
+# --- Document Frequency (DF) ---
+df = np.sum(tf_matrix > 0, axis=0)
+
+# --- Magnitude of each document vector ---
+magnitudes = np.linalg.norm(tfidf_matrix, axis=1)
+
+# --- Cosine similarity and dot product ---
+def cosine_and_dot(query_vec, doc_vec):
+    dot = np.dot(query_vec, doc_vec)
+    norm_query = np.linalg.norm(query_vec)
+    norm_doc = np.linalg.norm(doc_vec)
+    if norm_query == 0 or norm_doc == 0:
+        cosine = 0.0  # instead of NaN
+    else:
+        cosine = dot / (norm_query * norm_doc)
+    return cosine, dot
+
+
+# --- Get query from user ---
+query = input("Enter your query: ")
+query_vec = vectorizer.transform([query]).toarray()[0]
+
+# --- Build full table ---
+rows = []
+for i, doc_id in enumerate(documents.keys()):
+    cosine, dot = cosine_and_dot(query_vec, tfidf_matrix[i])
+    for j, term in enumerate(terms):
+        rows.append({
+            "Document": doc_id,
+            "Term": term,
+            "TF": tf_matrix[i, j],
+            "DF": int(df[j]),
+            "IDF": round(idf_values[j], 4),
+            "Weight(TF*IDF)": round(tfidf_matrix[i, j], 4),
+            "Magnitude": round(magnitudes[i], 4),
+            "Cosine with Query": round(cosine, 4),
+            "Dot with Query": round(dot, 4)
+        })
+
+df_table = pd.DataFrame(rows)
+print("\n=== Full TF-IDF & Similarity Table ===")
+print(df_table)
+```
 ### Output:
 
-<img width="832" height="650" alt="image" src="https://github.com/user-attachments/assets/ba649f03-d72d-4bca-8f48-17cb8cb3a9a6" />
+<img width="1084" height="398" alt="image" src="https://github.com/user-attachments/assets/900b4959-94e8-484e-a7b2-c507b9bb06c6" />
 
 
 ### Result:
-Thus Link Analysis using HITS Algorithm in Python is successfully implemented.
+Thus the code to implement Information Retrieval Using Vector Space Model in Python is executed successfully
